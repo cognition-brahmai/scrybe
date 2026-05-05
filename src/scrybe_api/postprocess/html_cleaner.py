@@ -16,12 +16,12 @@ def clean_html(html: str) -> BeautifulSoup:
     for tag in soup.find_all(True):
         if not isinstance(tag, Tag):
             continue
+        attr_items = (tag.attrs or {}).items()
         attrs = " ".join(
             str(value)
-            for key, value in tag.attrs.items()
+            for key, value in attr_items
             if key in {"id", "class", "aria-label", "role"}
         ).lower()
         if any(hint in attrs for hint in NOISE_HINTS):
             tag.decompose()
     return soup
-

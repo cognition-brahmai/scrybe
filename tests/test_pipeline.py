@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import pytest
+from bs4 import BeautifulSoup
 
 try:
     import fitz
@@ -19,6 +20,7 @@ from scrybe_api.parsers.html import HtmlParser
 from scrybe_api.parsers.misc import MiscParser
 from scrybe_api.parsers.pdf import PdfParser
 from scrybe_api.parsers.router import ParserRouter
+from scrybe_api.postprocess.html_cleaner import clean_html
 from scrybe_api.schemas.common import ChunkStrategy, ParseRequest
 from scrybe_api.storage.cache import FileCache
 
@@ -152,3 +154,16 @@ def test_html_parser_builds_semantic_markdown():
     assert "## The bodh architectures." in markdown
     assert "A highly distilled architecture." in markdown
     assert "[Request briefing](https://example.com/briefing)" in markdown
+
+
+def test_clean_html_handles_tags_with_none_attrs(monkeypatch: pytest.MonkeyPatch):
+    soup = BeautifulSoup("<html><body><main><section>hello</section></main></body></html>", "lxml")
+    section = soup.find("section")
+    assert section is not None
+    section.attrs = None
+
+    from scrybe_api.postprocess import html_cleaner
+
+    monkeypatch.setattr(html_cleaner, "BeautifulSoup", lambda html, parser: soup)
+    cleaned = clean_html("<html></html>")
+    assert cleaned.find("section") is not None
