@@ -47,7 +47,11 @@ class ParsePipeline:
             str(request.url),
             request.timeout_seconds or self.settings.request_timeout_seconds,
         )
-        if self._should_escalate(fetch_result.text or "", request):
+        if self._should_escalate(
+            text=fetch_result.text or "",
+            content_type=fetch_result.content_type,
+            request=request,
+        ):
             warnings.append("Static fetch looked low-signal; escalated to browser rendering.")
             try:
                 fetch_result = await self.dynamic_fetcher.fetch(
@@ -56,6 +60,11 @@ class ParsePipeline:
                 )
             except ExternalDependencyUnavailable:
                 warnings.append("Browser rendering unavailable; continuing with static fetch output.")
+            except Exception as exc:
+                warnings.append(
+                    "Browser rendering failed; continuing with static fetch output. "
+                    f"Reason: {exc}"
+                )
         fetch_ms = (time.perf_counter() - fetch_start) * 1000
 
         parse_start = time.perf_counter()
@@ -104,9 +113,16 @@ class ParsePipeline:
         self.cache.set("parse_results", cache_key, document.model_dump(mode="json"))
         return document
 
-    def _should_escalate(self, text: str, request: ParseRequest) -> bool:
+    def _should_escalate(self, text: str, content_type: str, request: ParseRequest) -> bool:
+        normalized_content_type = (content_type or "").lower()
+        is_html_like = any(
+            marker in normalized_content_type
+            for marker in ("text/html", "application/xhtml+xml")
+        )
         if request.use_browser:
-            return True
+            return is_html_like
+        if not is_html_like:
+            return False
         stripped = " ".join(text.split())
         if len(stripped) >= self.settings.dynamic_threshold_chars:
             return False

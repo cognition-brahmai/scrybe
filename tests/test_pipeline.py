@@ -76,6 +76,32 @@ class StubEnricher(OpenAIEnricher):
         return "summary"
 
 
+class PdfStaticFetcher(StaticFetcher):
+    async def fetch(self, url: str, timeout_seconds: int):
+        return FetchResult(
+            source_url=url,
+            final_url=url,
+            status_code=200,
+            content_type="application/pdf",
+            text=None,
+            content=b"%PDF-1.4 fake pdf bytes",
+            headers={},
+            fetched_via="static",
+        )
+
+
+class FailingDynamicFetcher(DynamicFetcher):
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def is_available() -> bool:
+        return True
+
+    async def fetch(self, url: str, timeout_seconds: int):
+        raise RuntimeError("missing shared library")
+
+
 @pytest.fixture()
 def pipeline():
     settings = get_settings()
@@ -167,3 +193,58 @@ def test_clean_html_handles_tags_with_none_attrs(monkeypatch: pytest.MonkeyPatch
     monkeypatch.setattr(html_cleaner, "BeautifulSoup", lambda html, parser: soup)
     cleaned = clean_html("<html></html>")
     assert cleaned.find("section") is not None
+
+
+@pytest.mark.asyncio
+async def test_pipeline_does_not_browser_escalate_pdf(monkeypatch: pytest.MonkeyPatch):
+    settings = get_settings()
+    dynamic_fetcher = FailingDynamicFetcher()
+
+    async def fake_pdf_parse(content, source_url, use_ocr_fallback=True):
+        return "PDF body", "PDF body", None, [], []
+
+    parser = PdfParser(LiteParseAdapter(settings))
+    monkeypatch.setattr(parser, "parse", fake_pdf_parse)
+
+    pipeline = ParsePipeline(
+        settings=settings,
+        static_fetcher=PdfStaticFetcher(),
+        dynamic_fetcher=dynamic_fetcher,
+        parser_router=ParserRouter(
+            html_parser=HtmlParser(),
+            pdf_parser=parser,
+            misc_parser=MiscParser(LiteParseAdapter(settings)),
+        ),
+        cache=FileCache(settings),
+        enricher=StubEnricher(),
+    )
+
+    document = await pipeline.parse_url(
+        ParseRequest(url="https://example.com/file.pdf", force_refresh=True)
+    )
+    assert document.content_type == "pdf"
+    assert "PDF body" in document.markdown
+    assert not any("browser rendering failed" in warning.lower() for warning in document.warnings)
+
+
+@pytest.mark.asyncio
+async def test_pipeline_gracefully_handles_browser_runtime_failure():
+    settings = get_settings()
+    pipeline = ParsePipeline(
+        settings=settings,
+        static_fetcher=StubStaticFetcher(),
+        dynamic_fetcher=FailingDynamicFetcher(),
+        parser_router=ParserRouter(
+            html_parser=HtmlParser(),
+            pdf_parser=PdfParser(LiteParseAdapter(settings)),
+            misc_parser=MiscParser(LiteParseAdapter(settings)),
+        ),
+        cache=FileCache(settings),
+        enricher=StubEnricher(),
+    )
+
+    document = await pipeline.parse_url(
+        ParseRequest(url="https://example.com/page", use_browser=True, force_refresh=True)
+    )
+    assert document.content_type == "webpage"
+    assert any("browser rendering failed" in warning.lower() for warning in document.warnings)
