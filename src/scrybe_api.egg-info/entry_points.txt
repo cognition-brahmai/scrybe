@@ -1,0 +1,2 @@
+[console_scripts]
+scrybe-api = scrybe_api.cli:app

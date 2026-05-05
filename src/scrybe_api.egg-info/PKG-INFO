@@ -1,0 +1,92 @@
+Metadata-Version: 2.4
+Name: scrybe-api
+Version: 0.1.0
+Summary: Python-first URL-to-structured-data ingestion API with optional OCR and LLM enrichment.
+Author: OpenAI Codex
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: aiosqlite>=0.20.0
+Requires-Dist: anyio>=4.4.0
+Requires-Dist: beautifulsoup4>=4.12.3
+Requires-Dist: fastapi>=0.115.0
+Requires-Dist: feedparser>=6.0.11
+Requires-Dist: httpx>=0.27.0
+Requires-Dist: langdetect>=1.0.9
+Requires-Dist: lxml>=5.2.2
+Requires-Dist: markdownify>=0.13.1
+Requires-Dist: openai>=1.30.0
+Requires-Dist: pillow>=10.3.0
+Requires-Dist: pydantic>=2.7.0
+Requires-Dist: pydantic-settings>=2.2.1
+Requires-Dist: pymupdf>=1.24.4
+Requires-Dist: python-docx>=1.1.2
+Requires-Dist: python-pptx>=1.0.2
+Requires-Dist: openpyxl>=3.1.5
+Requires-Dist: pandas>=2.2.2
+Requires-Dist: pygments>=2.18.0
+Requires-Dist: python-multipart>=0.0.9
+Requires-Dist: typer>=0.12.3
+Requires-Dist: uvicorn[standard]>=0.30.1
+Provides-Extra: dev
+Requires-Dist: pytest>=8.2.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23.7; extra == "dev"
+Requires-Dist: respx>=0.21.1; extra == "dev"
+Provides-Extra: browser
+Requires-Dist: playwright>=1.45.0; extra == "browser"
+Provides-Extra: epub
+Requires-Dist: ebooklib>=0.18; extra == "epub"
+Provides-Extra: audio
+Requires-Dist: faster-whisper>=1.0.3; extra == "audio"
+Requires-Dist: youtube-transcript-api>=0.6.2; extra == "audio"
+Requires-Dist: yt-dlp>=2024.5.27; extra == "audio"
+
+# SCRYBE API
+
+SCRYBE API is a Python-first ingestion service that converts web URLs into clean Markdown and structured JSON for LLM workflows. It uses deterministic parsing first, optionally enriches content with OpenAI, and can fall back to a Node-based LiteParse CLI adapter for OCR-heavy documents.
+
+## Features
+
+- FastAPI service with sync parse endpoints and async jobs
+- Static fetch via `httpx` with Playwright escalation for dynamic pages
+- HTML, PDF, JSON, XML, RSS, image, and office-document parsing hooks
+- SQLite job persistence and disk-backed cache/artifacts
+- Optional OpenAI captions and summaries
+- OCR/document fallback through a Python-owned LiteParse subprocess adapter
+
+## Quick start
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -e .[dev]
+uvicorn scrybe_api.main:app --reload
+```
+
+## Environment
+
+Configure `.env` with any values you need:
+
+```env
+OPENAI_BASE_URL=
+OPENAI_API_KEY=
+SCRYBE_DATA_DIR=.scrybe_data
+SCRYBE_SQLITE_PATH=.scrybe_data/scrybe.db
+SCRYBE_LITEPARSE_CMD=lit
+SCRYBE_ENABLE_AUTH=false
+```
+
+## API
+
+- `GET /v1/health`
+- `GET /v1/capabilities`
+- `GET /v1/parse/{format}?url=https://example.com`
+- `POST /v1/parse/{format}`
+- `POST /v1/jobs`
+- `GET /v1/jobs/{job_id}`
+
+## Notes
+
+- `format` is `markdown` or `json`
+- heavy or browser/OCR-oriented requests are automatically redirected to async jobs
+- Node remains an internal implementation detail behind the OCR adapter
+

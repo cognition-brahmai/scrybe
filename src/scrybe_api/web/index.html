@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SCRYBE</title>
+  <meta
+    name="description"
+    content="SCRYBE turns messy URLs into structured markdown and JSON that language models can actually read."
+  />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+  <div class="page-noise" aria-hidden="true"></div>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/">
+        <span class="brand-mark"></span>
+        <span class="brand-copy">
+          <strong>SCRYBE</strong>
+          <small>structured ingestion engine</small>
+        </span>
+      </a>
+      <nav class="topnav">
+        <a href="#capabilities">Capabilities</a>
+        <a href="#flow">Flow</a>
+        <a href="/docs">Docs</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero reveal">
+        <div class="hero-copy">
+          <p class="eyebrow">For agents, RAG, and long-context systems</p>
+          <h1>URLs in. Structured context out.</h1>
+          <p class="lede">
+            SCRYBE fetches pages, resolves dynamic rendering, extracts semantic structure,
+            falls back to OCR when needed, and returns markdown or JSON that feels deliberate
+            instead of scraped.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button primary" href="/v1/parse/json?url=https://example.com">Try JSON Parse</a>
+            <a class="button secondary" href="/v1/parse/markdown?url=https://example.com">Try Markdown Parse</a>
+          </div>
+
+          <dl class="hero-metrics">
+            <div>
+              <dt>Input</dt>
+              <dd>web pages, dynamic apps, PDFs, OCR-heavy docs</dd>
+            </div>
+            <div>
+              <dt>Output</dt>
+              <dd>semantic markdown, structured JSON, job-based workflows</dd>
+            </div>
+            <div>
+              <dt>Runtime</dt>
+              <dd>Python-first API, browser fallback, Node hidden behind OCR</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="hero-console reveal">
+          <div class="console-head">
+            <span>Live Shape</span>
+            <span class="pulse">operational</span>
+          </div>
+
+          <div class="console-window">
+            <div class="console-label">Example URL</div>
+            <div class="console-url" id="sample-url">https://brahmai.in</div>
+
+            <div class="console-label">Example response shape</div>
+            <pre id="sample-output">GET /v1/parse/json?url=https://brahmai.in
+
+{
+  "format": "json",
+  "document": {
+    "metadata": {
+      "title": "...",
+      "description": "...",
+      "content_type": "webpage"
+    },
+    "markdown": "Title: ...\nMeta Description: ...",
+    "chunks": null,
+    "summary": null
+  }
+}</pre>
+          </div>
+
+          <div class="capability-strip" id="capability-strip">
+            <span class="cap-pill">JSON</span>
+            <span class="cap-pill">Markdown</span>
+            <span class="cap-pill">OCR fallback</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature-grid" id="capabilities">
+        <article class="feature-card reveal">
+          <p class="card-index">01</p>
+          <h2>Semantic extraction</h2>
+          <p>
+            SCRYBE no longer just flattens HTML. It finds the main content root, preserves
+            headings, lists, links, blockquotes, tables, code, and keeps the result readable
+            for downstream reasoning.
+          </p>
+        </article>
+
+        <article class="feature-card reveal">
+          <p class="card-index">02</p>
+          <h2>Smart runtime ladder</h2>
+          <p>
+            Static fetch first. Browser render when the page is mostly shell. OCR or LiteParse
+            only when native extraction becomes untrustworthy. Faster happy path, deeper fallback.
+          </p>
+        </article>
+
+        <article class="feature-card reveal">
+          <p class="card-index">03</p>
+          <h2>LLM-ready delivery</h2>
+          <p>
+            Every document can carry title, source, description, content type, raw text, images,
+            timings, chunks, and optional enrichment so your agents receive context with provenance.
+          </p>
+        </article>
+      </section>
+
+      <section class="flow reveal" id="flow">
+        <div class="flow-copy">
+          <p class="eyebrow">How it works</p>
+          <h2>A calmer pipeline for chaotic pages.</h2>
+          <p>
+            The point is not “scraping.” The point is reconstructing a document that feels like
+            it was authored for a machine collaborator.
+          </p>
+        </div>
+
+        <div class="flow-steps">
+          <div class="step">
+            <span>Fetch</span>
+            <p>Start with fast HTTP retrieval and only escalate when the DOM looks like a shell.</p>
+          </div>
+          <div class="step">
+            <span>Understand</span>
+            <p>Choose the real content root and walk the structure intentionally instead of dumping nodes.</p>
+          </div>
+          <div class="step">
+            <span>Normalize</span>
+            <p>Emit stable markdown and JSON with metadata, links, tables, code blocks, and provenance.</p>
+          </div>
+          <div class="step">
+            <span>Extend</span>
+            <p>Add OCR, chunking, summaries, captions, and async jobs only when the workload deserves it.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="api-band reveal">
+        <div>
+          <p class="eyebrow">Endpoints</p>
+          <h2>Built like a service, not a demo.</h2>
+          <p class="signature">An experimental intelligence infrastructure product from BRAHMAI.</p>
+        </div>
+        <div class="endpoint-list">
+          <a href="/v1/parse/json?url=https://example.com"><code>GET /v1/parse/json</code></a>
+          <a href="/v1/parse/markdown?url=https://example.com"><code>GET /v1/parse/markdown</code></a>
+          <a href="/v1/jobs"><code>POST /v1/jobs</code></a>
+          <a href="/v1/capabilities"><code>GET /v1/capabilities</code></a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>
